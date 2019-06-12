@@ -4,21 +4,29 @@ import numpy as np
 # This example (page 62 in text) calculates standard error on a measure relating
 # to eigenvectors and eigenvalues.
 #
-# The dataset is 88 samples of student test scores on five tests (mechnics,
+# The dataset is 88 samples of student test scores on five tests (mechanics,
 # vectors, algebra, analysis and statistics).  There is a high level of
 # correlation in the data - a student that does well in one subject frequently
-# does well in other subjects. This correlation between samples embodies
-# itself in the eigenvalues and eigenvectors.
+# does well in other subjects. This correlation between samples expresses
+# itself in the covariance matrix. A covariance matrix is a diagonal matrix
+# indicating the degree of correlation between variable x and variable y. The
+# measure of correlation is the sum of the product of (the difference between the ith
+# element m and its mean, times the difference between the ith variable n and its mean).
+# In this case the covariance matrix is a 5x5.
 #
-# Eigenvectors and Eigenvalues are the 'principle components' of the covariance matrix.
-# A 5x5 covariance matrix has 5 sets of eigenvalue/eigenvectors.  The first eigenvector
-# is a vector, the direction of which minimizes the sum-of-the-squared-distances. The second
-# is orthogonal to the first, minimizing the remaining sum of squared-distances, etc.
+# Eigenvalues and eigenvectors of the covariance matrix give insight into the relationship
+# between the variables.
+# Eigenvectors are the 'principle components' of the target matrix (in this case the
+# covariance matrix).
+# A 5x5 covariance matrix has 5 eigenvectors and 5 eigenvalues. The vector (the eigenvector)
+# is the direction which minimizes the sum-of-the-squared-distances. 
+# The first vector attempts to minimize this measure, the second is orthogonal to
+# the first and attempts to minimize the remaining sum of squared-distances, etc.
 # The eigenvalue gives the size of the vector.
 #
 # In this example (page 62) the "s" (measure we are interested in) is a ratio of the
 # first eigenvalue to the sum of the eigenvalues.  What this ratio expresses is
-# how significant the first eigenvector is compared to all the others.
+# how significant the first eigenvector is compared to all the others. 
 #
 # The example in the text - if the correlation between samples were perfect then
 # a relationship could be expressed as
@@ -31,11 +39,13 @@ import numpy as np
 # strong eigenvector_1 would be.
 #
 # In the code below - the "s" is:
-#   compute the 5 eigenvalues   eigenvalues[5]
-#   compute the ratio  eigenvalues[1] / sum(eigenvalues)
+#   compute the 5 eigenvalues:   eigenvalues[5]
+#   compute the ratio:  eigenvalues[1] / sum(eigenvalues)
 #
-# so the function receives x_star_i (the bootstrap sample), it
-# computes the covariance matrix (5x5), then from that the eigenvalues,
+# So the function below implements "s".
+# It receives x_star_i (the bootstrap sample),
+# it computes the covariance matrix (5x5),
+# then from that the eigenvalues,
 # then the ratio of first eigenvalue to the sum of eigenvalues
 
 def ratio_first_eigenvector_to_sum(x_star_i):
@@ -45,33 +55,59 @@ def ratio_first_eigenvector_to_sum(x_star_i):
     w, v = LA.eig(covariance_matrix)
     return( w[0] / sum(w) )
 
+# global variables - scratchpad to keep results
+# this is resized in the test once the data size is known
+#eigenvalues = >>> a = numpy.zeros(shape=(5,2))
+#eigenvectors = []
+#eigenvalues = []
 
 def test_07a():
     from numpy import linalg as LA
 
     X = get_data()
     s = ratio_first_eigenvector_to_sum
-    B = 2
+    B = 200
 
-    # explore the data...
-    #print(X.shape)
-    #covariance_matrix = np.cov(np.transpose(X))
-    #w, v = LA.eig(covariance_matrix)
-    #print(covariance_matrix)
-    #print(v)
-    #print(w)
+    # explore the empirical data...
+    print("--- empirical data ---")
+    print(X.shape)
+    covariance_matrix = np.cov(np.transpose(X))
+    w, v = LA.eig(covariance_matrix)
+    print(covariance_matrix)
+    print(v)
+    print(w)
     #assert(False)
 
     # run the bootstrap
+    print("--- run the bootstrap ---")
     bootstrap = Bootstrap.Bootstrap(X,s,B)
     [std, sem] = bootstrap.run()
 
-    #print("standard deviation:")
-    #print(std)
-    #print("standard error of the mean")
-    #print(sem)
+    print("standard deviation:")
+    print(std)
+    print("standard error of the mean")
+    print(sem)
     #assert(False)
 
+    # investigate the results
+    # plot the theta_stars (the measure) from the bootstrap replications
+    # the expectation is this is somewhat gaussian (long tails are not acceptable)
+    print("--- results from bootstrap ---")
+    #print(bootstrap.theta_star)
+    plot_histogram(bootstrap.theta_star, "Count of Occurrences", "Ratio: eigenV1/sum(eigen)", "Histogram - Count of EigenV1/sum")
+    assert(False)
+
+    # plot the first two principal component vectors using box-and-whisker
+    # we 
+
+
+    def my_callback(x_star, theta_star_b):
+
+        # in the callback we capture principal component vectors (eigenvectors)
+        covariance_matrix = np.cov(np.transpose(x_star))
+        w, v = LA.eig(covariance_matrix)
+
+        print("here")
 
 
 
@@ -171,3 +207,28 @@ def get_data():
     s_array = np.fromstring(s, dtype=int, sep=' ')
     s_array2 = np.reshape(s_array, (-1, 5))
     return s_array2
+
+
+
+
+
+
+def plot_histogram(x, ylabel, xlabel, title):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+    # the histogram of the data
+    n, bins, patches = plt.hist(x, facecolor='g')
+    ymin = 0
+    ymax = max(n) * 1.1
+    xmin = min(bins) * 0.9
+    xmax = max(bins) * 1.1
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    # plt.text(60, .025, r'foobar')
+    plt.axis([xmin, xmax, ymin, ymax])
+    plt.grid(True)
+    plt.show()
+
