@@ -26,13 +26,18 @@ class Bootstrap(object):
         self.s = s
         self.B = B
 
-    def run(self, callback=None):
+        self.callback_list = []
 
-        # Input parameter:
-        #   callback:  this is a caller-provided function that is called after
-        #              the bootstrap sample is created and theta_star calculated
-        #              it allows the user to do whatever they want with the data
 
+    def add_callback(self, callback):
+        # user-provided callback function
+        # this is called after the bootstrap sample is created
+        # and theta_star calculated
+        # the recipient receives (x_star data, calculated theta_star)
+        self.callback_list.append(callback)
+
+
+    def run(self):
         # we are collecting theta_star[b] - this is the measure
         # computed by the "s" function on the empirical sample x_star[b]
         self.theta_star = np.zeros((self.B))
@@ -49,8 +54,8 @@ class Bootstrap(object):
 
             # perform the callback - if the caller wants to do anything more with
             # the data this is their chance
-            if callback != None:
-                callback(x_star, self.theta_star[b])
+            for cb in self.callback_list:
+                cb(x_star, self.theta_star[b])
 
         # return [standard deviation, standard error] of theta_star[]
         return [np.std(self.theta_star), stats.sem(self.theta_star)]

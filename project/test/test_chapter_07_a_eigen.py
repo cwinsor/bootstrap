@@ -63,20 +63,24 @@ def ratio_first_eigenvector_to_sum(x_star_i):
 
     return( w[0] / sum(w) )
 
-# global variables are used as scratchpad to keep results
+# global variables used as scratchpad to keep results
 # the arrays are resized in the test once the data size is known
 #eigenvalues = >>> a = numpy.zeros(shape=(5,2))
-#eigenvectors = []
-#eigenvalues = []
+#eigenvectors = np.array([])
+#eigenvalues = np.array([])
 
 
 def test_07a():
     from numpy import linalg as LA
 
+    #eigenvectors = np.array([])
+    #eigenvalues = np.array([])
+
     X = my_data.get_data()
     print(X)
     s = ratio_first_eigenvector_to_sum
-    B = 200
+    #B = 200
+    B = 3
 
     # explore the empirical data...
     covariance_matrix = np.cov(X, bias=True, rowvar=False)
@@ -94,6 +98,7 @@ def test_07a():
     # run the bootstrap
     print("--- run the bootstrap ---")
     bootstrap = Bootstrap.Bootstrap(X,s,B)
+    bootstrap.add_callback(my_callback)
     [std, sem] = bootstrap.run()
 
     print("standard deviation:")
@@ -111,7 +116,10 @@ def test_07a():
     assert(False)
 
     # plot the first two principal component vectors using box-and-whisker
-    # we 
+    #print("eigenvalues\n", eigenvalues)
+    #print("eigenvectors\n", eigenvectors)
+    assert(False)
+
 
 
 def my_callback(x_star, theta_star_b):
@@ -122,3 +130,6 @@ def my_callback(x_star, theta_star_b):
         w, v = LA.eig(covariance_matrix)
         v = np.transpose(v)
         print("here")
+
+        eigenvectors = np.concatenate(eigenvectors, v)
+        eigenvalues = np.concatenate(eigenvalues, w)
