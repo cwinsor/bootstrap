@@ -2,6 +2,7 @@ import Bootstrap
 import numpy as np
 import data_chapter_07_a_eigen as my_data
 import my_charts
+from numpy import linalg as LA
 
 # This example (Section 7.2 Example 1, "test score data" on page 62 in text)
 # calculates standard error on a measure relating
@@ -54,82 +55,76 @@ import my_charts
 # then from that the eigenvalues,
 # then the ratio of first eigenvalue to the sum of eigenvalues
 
-def ratio_first_eigenvector_to_sum(x_star_i):
-    from numpy import linalg as LA
+class TestClass(object):
+                
+    def ratio_first_eigenvector_to_sum(self, x_star_i):
 
-    covariance_matrix = np.cov(x_star_i, bias=True)
-    w, v = LA.eig(covariance_matrix)
-    v = np.transpose(v)
-
-    return( w[0] / sum(w) )
-
-# global variables used as scratchpad to keep results
-# the arrays are resized in the test once the data size is known
-#eigenvalues = >>> a = numpy.zeros(shape=(5,2))
-#eigenvectors = np.array([])
-#eigenvalues = np.array([])
-
-
-def test_07a():
-    from numpy import linalg as LA
-
-    #eigenvectors = np.array([])
-    #eigenvalues = np.array([])
-
-    X = my_data.get_data()
-    print(X)
-    s = ratio_first_eigenvector_to_sum
-    #B = 200
-    B = 3
-
-    # explore the empirical data...
-    covariance_matrix = np.cov(X, bias=True, rowvar=False)
-    w, v = LA.eig(covariance_matrix)
-    v = np.transpose(v)
-    print("--- empirical data - shape ---")
-    print(X.shape)
-    print("--- empirical data - covariance matrix ---")
-    print(covariance_matrix)
-    print("--- empirical data - eigenvalues ---")
-    print(w)
-    print("--- empirical data - eigenvectors ---")
-    print(v)
-
-    # run the bootstrap
-    print("--- run the bootstrap ---")
-    bootstrap = Bootstrap.Bootstrap(X,s,B)
-    bootstrap.add_callback(my_callback)
-    [std, sem] = bootstrap.run()
-
-    print("standard deviation:")
-    print(std)
-    print("standard error of the mean")
-    print(sem)
-    #assert(False)
-
-    # investigate the results
-    # plot the theta_stars (the measure) from the bootstrap replications
-    # the expectation is this is somewhat gaussian (long tails are not acceptable)
-    print("--- results from bootstrap ---")
-    #print(bootstrap.theta_star)
-    my_charts.plot_histogram(bootstrap.theta_star, "Count of Occurrences", "Ratio: eigenV1/sum(eigen)", "Histogram - Count of EigenV1/sum")
-    assert(False)
-
-    # plot the first two principal component vectors using box-and-whisker
-    #print("eigenvalues\n", eigenvalues)
-    #print("eigenvectors\n", eigenvectors)
-    assert(False)
-
-
-
-def my_callback(x_star, theta_star_b):
-        from numpy import linalg as LA
-
-        # in the callback we capture principal component vectors (eigenvectors)
-        covariance_matrix = np.cov(np.transpose(x_star), bias=True)
+        covariance_matrix = np.cov(x_star_i, bias=True)
         w, v = LA.eig(covariance_matrix)
         v = np.transpose(v)
-        print("here")
 
-        eigenvectors = np.concatenate(eigenvectors, v)
-        eigenvalues = np.concatenate(eigenvalues, w)
+        return( w[0] / sum(w) )
+
+
+    def test_07a(self):
+
+        X = my_data.get_data()
+        #print(X)
+        s = self.ratio_first_eigenvector_to_sum
+        #B = 200
+        B = 10
+
+        # explore the empirical data...
+        covariance_matrix = np.cov(X, bias=True, rowvar=False)
+        w, v = LA.eig(covariance_matrix)
+        v = np.transpose(v)
+        print("--- empirical data - shape ---")
+        print(X.shape)
+        print("--- empirical data - covariance matrix ---")
+        print(covariance_matrix)
+        print("--- empirical data - eigenvalues ---")
+        print(w)
+        print("--- empirical data - eigenvectors ---")
+        print(v)
+
+        # prepare to collect data - empty 3-d array
+        num_attributes = X.shape[1]
+        self.eigenvectors = np.empty([0, num_attributes, num_attributes])
+
+        # run the bootstrap
+        print("--- run the bootstrap ---")
+        bootstrap = Bootstrap.Bootstrap(X,s,B)
+        bootstrap.add_callback(self.my_callback)
+        [std, sem] = bootstrap.run()
+
+        print("standard deviation:")
+        print(std)
+        print("standard error of the mean")
+        print(sem)
+        #assert(False)
+
+        # investigate the results
+        # plot the theta_stars (the measure) from the bootstrap replications
+        # the expectation is this is somewhat gaussian (long tails are not acceptable)
+        print("--- results from bootstrap ---")
+        my_charts.plot_histogram(bootstrap.theta_star, "Count of Occurrences", "Ratio: eigenV1/sum(eigen)", "Histogram - Count of EigenV1/sum")
+        #assert(False)
+
+        # plot the first two principal component vectors using box-and-whisker
+        # we are looking for (lack of) variability
+        print("first two principal components")
+        print(self.eigenvectors.shape)
+
+        my_charts.plot_box_and_whisker()
+        assert(False)
+
+
+    def my_callback(self, x_star, theta_star_b):
+            from numpy import linalg as LA
+
+            # in the callback we capture principal component vectors (eigenvectors)
+            covariance_matrix = np.cov(np.transpose(x_star), bias=True)
+            w, v = LA.eig(covariance_matrix)
+            v = np.transpose(v)
+            v2 = np.expand_dims(v, axis=0)
+            self.eigenvectors = np.concatenate((self.eigenvectors, v2))
