@@ -71,8 +71,8 @@ class TestClass(object):
         X = my_data.get_data()
         #print(X)
         s = self.ratio_first_eigenvector_to_sum
-        #B = 200
-        B = 10
+        B = 200
+        #B = 10
 
         # explore the empirical data...
         covariance_matrix = np.cov(X, bias=True, rowvar=False)
@@ -116,7 +116,7 @@ class TestClass(object):
         print(self.eigenvectors.shape)
 
         my_charts.plot_box_and_whisker()
-        assert(False)
+        #assert(False)
 
 
     def my_callback(self, x_star, theta_star_b):

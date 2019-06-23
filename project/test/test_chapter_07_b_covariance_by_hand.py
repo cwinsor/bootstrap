@@ -6,6 +6,9 @@ import pytest
 
 # This test calculates covariance by hand
 # and compares to results from numpy
+# 
+# This is from example (Section 7.2 Example 1, "test score data" on page 62 in text)
+
 
 def test_07b_calculate_covariance_by_hand():
         from numpy import linalg as LA
